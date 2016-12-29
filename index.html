@@ -100,49 +100,64 @@
 	 *
 	 * 7) You should save your final product as googleBooks_codeTest_<your last name>.html
 	 *
-	 *
-	 * TODO:
-	 * 1) Get api to work in postman. Figure out authentication.
-	 * 2) Create UI to store data
-	 * 3)
 	 */
 
-	/**
-	 * Renders an error message
-	 * @param msg {string} - error message to render
-	 */
-	function showError(err) {
-		responseText = JSON.parse(err.responseText)
-		errMessage = responseText.error.message
-		console.error(errMessage);
-		var html = '<li><p class="error">' + errMessage + '</p></li>';
-		$("#results").html(html);
-	}
+	 $(function() {
 
-	/**
-	 * Searches for books and returns a JSON list
-	 * @param term {string} - search term
-	 * @param callback {function} - do something with results
-	 */
-	function searchForBooks(term) {
-		console.log("Searching for " + term)
-		$.ajax({
-			url: "https://www.googleapis.com/books/v1/volumes?q=" + term,
-			type: "GET",
-			success: render,
-			error: showError
-		});
-	}
+		 	// On clicking #searchBtn search for term in #searchBar
+			$("#searchBtn").click(function() {
+				var searchBar = $("#searchBar")
+				var term = $("#searchBar")[0].value
 
-	/**
-	 * Render loadedBooks contents
-	 * Generates HTML and sets #results's contents to it
-	 */
-	function render(res) {
-		console.log(res);
-	}
+				searchForBooks(term);
+			});
 
-	searchForBooks("bible");
+			/**
+			 * Renders an error message
+			 * @param msg {string} - error message to render
+			 */
+			function showError(err) {
+				responseText = JSON.parse(err.responseText)
+				errMessage = responseText.error.message
+				alert(errMessage);
+				// var html = '<li><p class="error">' + errMessage + '</p></li>';
+				// $("#results").html(html);
+			}
+
+			/**
+			 * Searches for books and returns a JSON list
+			 * @param term {string} - search term
+			 * @param callback {function} - do something with results
+			 */
+			function searchForBooks(term) {
+				console.log("Searching for " + term)
+				$.ajax({
+					url: "https://www.googleapis.com/books/v1/volumes?q=" + term,
+					type: "GET",
+					success: render,
+					error: showError
+				});
+			}
+
+			/**
+			 * Render loadedBooks contents
+			 * Generates HTML and sets #results's contents to it
+			 */
+			function render(res) {
+				var item = res.items[0]
+				var image = item.volumeInfo.imageLinks.thumbnail
+				var title = item.volumeInfo.title
+				var description = item.volumeInfo.description
+				var authors = item.volumeInfo.authors
+
+				console.log(item);
+				var html = '<img src="' + image + '" />';
+				$("#results").html(html);
+			}
+
+
+	 });
+
 
 	</script>
 </body>
