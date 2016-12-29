@@ -27,6 +27,10 @@
 			text-align: center;
 		}
 
+		.result {
+
+		}
+
 	</style>
 </head>
 
@@ -48,6 +52,9 @@
 
 		<div id="resultsArea">
 			<ul id="results">
+				<li class="result">
+					asfasdf
+				</li>
 			</ul>
 		</div>
 	</div>
@@ -92,14 +99,23 @@
 	 *    This will require you to write some code outside of them.
 	 *
 	 * 7) You should save your final product as googleBooks_codeTest_<your last name>.html
+	 *
+	 *
+	 * TODO:
+	 * 1) Get api to work in postman. Figure out authentication.
+	 * 2) Create UI to store data
+	 * 3)
 	 */
 
 	/**
 	 * Renders an error message
 	 * @param msg {string} - error message to render
 	 */
-	function showError(msg) {
-		var html = '<li><p class="error">' + msg + '</p></li>';
+	function showError(err) {
+		responseText = JSON.parse(err.responseText)
+		errMessage = responseText.error.message
+		console.error(errMessage);
+		var html = '<li><p class="error">' + errMessage + '</p></li>';
 		$("#results").html(html);
 	}
 
@@ -108,17 +124,26 @@
 	 * @param term {string} - search term
 	 * @param callback {function} - do something with results
 	 */
-	function searchForBooks(term, callback) {
-		// TODO
+	function searchForBooks(term) {
+		console.log("Searching for " + term)
+		$.ajax({
+			url: "https://www.googleapis.com/books/v1/volumes?q=" + term,
+			type: "GET",
+			success: render,
+			error: showError
+		});
 	}
 
 	/**
 	 * Render loadedBooks contents
 	 * Generates HTML and sets #results's contents to it
 	 */
-	function render() {
-		// TODO
+	function render(res) {
+		console.log(res);
 	}
+
+	searchForBooks("bible");
+
 	</script>
 </body>
 
