@@ -10,6 +10,9 @@
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 
+	<!-- Toastr CSS -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" crossorigin="anonymous">
+
 
 	<!-- Custom inline CSS. I would never do this typically but since this seems to be a one
 			 file excersize for simplicity CSS is included here -->
@@ -39,6 +42,21 @@
 			border: #eee solid 1px;
 			border-radius: 5px;
 			overflow: hidden;
+			margin: 10px 0;
+		}
+
+		.result a {
+			color: #333;
+			color: rgba(0,0,0,0.8);
+		}
+
+		.result a:hover {
+			text-decoration: none;
+		}
+
+		.result h4 span {
+			font-style: italic;
+			font-size: 85%;
 		}
 
 		.result img {
@@ -72,7 +90,7 @@
 
 		<header>
 			<h1>Google Books Search Engine</h1>
-			<h3>Type a book into the search bar to do :this:</h3>
+			<h3>Type a book into the search bar to add to list</h3>
 		</header>
 
 		<div id="searchArea" class="input-group col-md-8 col-md-offset-2">
@@ -94,6 +112,8 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
 	<!-- Bootstrap JS -->
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+	<!-- Toastr JS -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 	<!-- Custom JS -->
 	<script type="text/javascript">
 	/**
@@ -134,12 +154,28 @@
 
 	 $(function() {
 
+		  // Array to keep track of book id's already added to results
+		  var bookIdArray = [];
+
+  	  // Toastr JS config
+		  toastr.options.timeOut = 1000;
+
 		 	// On clicking #searchBtn search for term in #searchBar
 			$("#searchBtn").click(function() {
 				var searchBar = $("#searchBar")
 				var term = $("#searchBar")[0].value
 
 				searchForBooks(term);
+			});
+
+			$("#searchBar").keypress(function(e) {
+				//Enter key pressed
+				if(e.which == 13){
+					var searchBar = $("#searchBar")
+					var term = $("#searchBar")[0].value
+
+					searchForBooks(term);
+				}
 			});
 
 			/**
@@ -149,7 +185,7 @@
 			function showError(err) {
 				responseText = JSON.parse(err.responseText)
 				errMessage = responseText.error.message
-				alert(errMessage);
+				toastr.error(errMessage)
 				// var html = '<li><p class="error">' + errMessage + '</p></li>';
 				// $("#results").html(html);
 			}
@@ -175,20 +211,38 @@
 			 */
 			function render(res) {
 				var item = res.items[0]
-				// If imageLinks is not undefined assign thumbnail to image, else assign undefined to image
-				var image = item.volumeInfo.imageLinks != undefined ? item.volumeInfo.imageLinks.thumbnail : undefined
-				var title = item.volumeInfo.title
-				var description = item.volumeInfo.description
-				var authors = item.volumeInfo.authors
 
-				console.log(item);
-				// var html = '<img src="' + image + '" />';
-				var html = renderResultHTML(image, title, description, authors)
-				$("#results").prepend(html);
+				if ($.inArray(item.id, bookIdArray) !== -1) {
+					toastr.error("Book already in results")
+				} else {
+					// If imageLinks is not undefined assign thumbnail to image, else assign undefined to image
+					var image = item.volumeInfo.imageLinks != undefined ? item.volumeInfo.imageLinks.thumbnail : undefined
+					var link = item.volumeInfo.infoLink
+					var title = item.volumeInfo.title
+					var subtitle = item.volumeInfo.subtitle
+					var description = item.volumeInfo.description
+					var authors = item.volumeInfo.authors
+
+					console.log(item);
+					// var html = '<img src="' + image + '" />';
+					var html = renderResultHTML(image, link, title, subtitle, description, authors)
+					bookIdArray.push(item.id);
+					$("#results").prepend(html);
+				}
 			}
 
-			function renderResultHTML(imageUrl, title, description, authors) {
+			/**
+			 * Render HTML to be inserted into #resultsArea
+			 * @param imageUrl {string} - Url for book image
+			 * @param link {string} - Url to book page
+			 * @param title {string} - Title of book
+			 * @param subtitle {sting} - Subtitle of book
+			 * @param description {string} - Description of book
+			 * @param authors {array} - Array of author that wrote the book
+			 */
+			function renderResultHTML(imageUrl, link, title, subtitle, description, authors) {
 				html = '<div class="result">'
+				html += '<a href="' + link + '">'
 
 				// Image
 				if (imageUrl != undefined) {
@@ -197,7 +251,13 @@
 					html += '<div class="unavailableImage"></div>'
 				}
 				html += '<div class="resultInfo">'
-				html += '<h4>' + title + '</h4>'  // Title
+
+				// Title and subtitle
+				if (subtitle != undefined) {
+					html += '<h4>' + title + ' <span> - ' + subtitle + '</span></h4>'
+				} else {
+					html += '<h4>' + title + '</h4>'
+				}
 
 				// Description
 				if (description != undefined) {
@@ -208,7 +268,7 @@
 
 				// Authors
 				if (authors != undefined) {
-					if (authors.length = 1) {
+					if (authors.length == 1) {
 						html += '<h5>Author</h5>'
 					} else {
 						html += '<h5>Authors</h5>'
@@ -224,12 +284,11 @@
 				// Closing Tags
 				html += '</ul>'
 				html += '</div>'
+				html += '</a>'
 				html += '</div>'
 
 				return html
 			}
-
-
 	 });
 
 
