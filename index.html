@@ -27,8 +27,40 @@
 			text-align: center;
 		}
 
-		.result {
+		#resultsArea {
+			margin: 30px 0;
+		}
 
+		#results {
+			padding: 0;
+		}
+
+		.result {
+			border: #eee solid 1px;
+			border-radius: 5px;
+			overflow: hidden;
+		}
+
+		.result img {
+			float: left;
+			height: 198px;
+			width: 128px;
+		}
+
+		.result .unavailableImage {
+			background-color: #eee;
+			float: left;
+			height: 198px;
+			width: 128px;
+		}
+
+		.result .resultInfo {
+			padding: 10px;
+			margin-left: 128px;
+		}
+
+		.result .resultAuthors {
+			list-style: none;
 		}
 
 	</style>
@@ -52,9 +84,7 @@
 
 		<div id="resultsArea">
 			<ul id="results">
-				<li class="result">
-					asfasdf
-				</li>
+				<!-- Results go here -->
 			</ul>
 		</div>
 	</div>
@@ -145,14 +175,58 @@
 			 */
 			function render(res) {
 				var item = res.items[0]
-				var image = item.volumeInfo.imageLinks.thumbnail
+				// If imageLinks is not undefined assign thumbnail to image, else assign undefined to image
+				var image = item.volumeInfo.imageLinks != undefined ? item.volumeInfo.imageLinks.thumbnail : undefined
 				var title = item.volumeInfo.title
 				var description = item.volumeInfo.description
 				var authors = item.volumeInfo.authors
 
 				console.log(item);
-				var html = '<img src="' + image + '" />';
-				$("#results").html(html);
+				// var html = '<img src="' + image + '" />';
+				var html = renderResultHTML(image, title, description, authors)
+				$("#results").prepend(html);
+			}
+
+			function renderResultHTML(imageUrl, title, description, authors) {
+				html = '<div class="result">'
+
+				// Image
+				if (imageUrl != undefined) {
+					html += '<img src="' + imageUrl + '">'
+				} else {
+					html += '<div class="unavailableImage"></div>'
+				}
+				html += '<div class="resultInfo">'
+				html += '<h4>' + title + '</h4>'  // Title
+
+				// Description
+				if (description != undefined) {
+					html += '<p>' + description + '</p>'
+				} else {
+					html += '<p><i>' + 'No description available' + '</i></p>'
+				}
+
+				// Authors
+				if (authors != undefined) {
+					if (authors.length = 1) {
+						html += '<h5>Author</h5>'
+					} else {
+						html += '<h5>Authors</h5>'
+					}
+
+					html += '<ul class="resultAuthors">'
+
+					for (var i = 0; i < authors.length; i++) {
+						html += '<li>' + authors[i] + '</li>'
+					}
+				}
+
+				// Closing Tags
+				html += '</ul>'
+				html += '</div>'
+				html += '</div>'
+
+				return html
 			}
 
 
